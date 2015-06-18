@@ -1,0 +1,81 @@
+#!/bin/bash
+
+function usage {
+    echo
+    echo "Usage: [hacloud|cephstorage]"
+    echo
+    echo "-h|--help     Help"
+    echo
+    echo "[option]      [description]"
+    echo "hacloud       deploys SUSE Cloud 5 GM with HA enabled"
+    echo "cephstorage   deploys SUSE Cloud 5 with Ceph backend (SUSE Enterprise storage)"
+    echo
+    exit
+}
+
+function deploy_ha {
+
+    allocated_cloud=1
+    mkcloudrun ${allocated_cloud}
+
+    export hacloud=1
+    export clusterconfig="services+data=2:network=3"
+    export nodenumber=6
+
+    exec ./automation/scripts/mkcloud cleanup prepare setupadmin addupdaterepo runupdate prepareinstcrowbar instcrowbar rebootcrowbar setupnodes
+
+}
+
+function deploy_storage {
+
+    allocated_cloud=2
+    mkcloudrun ${allocated_cloud}
+
+    export clusterconfig="services+data=2:network=3"
+    export nodenumber=6
+
+    export wantceph=1
+    export nodenumber=4
+
+    exec ./automation/scripts/mkcloud cleanup prepare setupadmin addupdaterepo runupdate prepareinstcrowbar instcrowbar rebootcrowbar setupnodes
+
+}
+
+function mkcloudrun {
+
+    n=$1
+
+    export PARALLEL=yes
+    export vcpus=2
+    export net_admin=192.168.$((50+$n*2))
+    export net_public=192.168.$((51+$n*2))
+    export adminnetmask=255.255.254.0
+    export cloudvg=libvirt # TODO(pranav): Change for the main deployment
+
+    export virtualcloud=c$n
+    export cloud=$virtualcloud
+
+    unset NOQACROWBARDOWNLOAD
+    unset TESTHEAD
+    unset hacloud
+    unset wantceph
+
+    export cloudsource=GM5+up
+    export libvirt_type=kvm
+    export networkingplugin=openvswitch
+    export cephvolumenumber=1
+
+
+}
+
+git submodule init && git submodule update
+
+if [ "$1" == "hacloud" ]
+then
+    deploy_ha
+elif [ "$1" == "cephstorage" ]
+then
+    deploy_storage
+fi
+
+usage
