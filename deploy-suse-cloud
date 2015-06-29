@@ -31,10 +31,6 @@ function deploy_storage {
     allocated_cloud=2
     mkcloudrun ${allocated_cloud}
 
-    export clusterconfig="services+data=2:network=3"
-    export nodenumber=6
-
-    export wantceph=1
     export nodenumber=4
 
     exec ./automation/scripts/mkcloud cleanup prepare setupadmin addupdaterepo runupdate prepareinstcrowbar instcrowbar rebootcrowbar setupnodes
@@ -45,7 +41,6 @@ function mkcloudrun {
 
     n=$1
 
-    export PARALLEL=yes
     export vcpus=2
     export net_admin=192.168.$((50+$n*2))
     export net_public=192.168.$((51+$n*2))
@@ -55,16 +50,14 @@ function mkcloudrun {
     export virtualcloud=c$n
     export cloud=$virtualcloud
 
-    unset NOQACROWBARDOWNLOAD
     unset TESTHEAD
     unset hacloud
-    unset wantceph
 
     export cloudsource=GM5+up
-    export libvirt_type=kvm
-    export networkingplugin=openvswitch
-    export cephvolumenumber=1
-
+    # default values:
+    #export libvirt_type=kvm
+    #export networkingplugin=openvswitch
+    #export cephvolumenumber=1
 
 }
 
